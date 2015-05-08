@@ -1,0 +1,65 @@
+void perltidy() {
+  setAccessibility(true);
+
+  String command = "cd \"" + java.lang.System.getProperty("user.dir") + "\"";
+
+  clearConsole(view);
+  runInSystemShell(view, command);
+
+  while ( !waitForConsole(view) ){
+    VFSManager.waitForRequests();
+  }
+
+  String content = textArea.getSelectedText();
+  String path = "/tmp/perltidy" + java.lang.System.getProperty("user.name");
+  String path_tdy = "/tmp/perltidy_tdy" + java.lang.System.getProperty("user.name");
+
+  Buffer tmp = jEdit.openTemporary( view, null, path, false );
+
+  while( !tmp.isLoaded() ) {
+    VFSManager.waitForRequests();
+  }
+
+  tmp.remove( 0, tmp.getLength() );
+  tmp.insert( 0, content );
+  tmp.save( view, path );
+  jEdit.closeBuffer( view, tmp );
+
+  command = "rm -f " + path_tdy;
+
+  while ( !waitForConsole(view) ){
+    VFSManager.waitForRequests();
+  }
+
+  clearConsole(view);
+  runInSystemShell(view, command);
+
+  while ( !waitForConsole(view) ){
+    VFSManager.waitForRequests();
+  }
+
+  command = "perltidy --perl-best-practices --output-line-ending=unix --indent-columns=2 " + "\"" + path + "\" -st > \"" + path_tdy + "\"";
+
+  clearConsole(view);
+  runInSystemShell(view, command);
+
+  while ( !waitForConsole(view) ){
+    VFSManager.waitForRequests();
+  }
+
+  if (view.getDockableWindowManager().isDockableWindowVisible("console") == true)
+    view.getDockableWindowManager().removeDockableWindow("console");
+
+  tmp = jEdit.openTemporary( view, null, path_tdy, false );
+
+  while( !tmp.isLoaded() ) {
+    VFSManager.waitForRequests();
+  }
+
+  String tdy = tmp.getText( 0, tmp.getLength() );
+  jEdit.closeBuffer( view, tmp );
+
+  textArea.setSelectedText(tdy);
+}
+
+perltidy();
